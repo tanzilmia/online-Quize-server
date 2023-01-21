@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(cors());
 app.use(express.json());
-const mongoUrl = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.nz3kcdw.mongodb.net/?retryWrites=true&w=majority`;
+const mongoUrl = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.nz3kcdw.mongodb.net/OnlineQuize?retryWrites=true&w=majority`;
 
 mongoose
   .connect(mongoUrl, {
@@ -29,12 +29,41 @@ const userSchema = new mongoose.Schema({
   password: String,
 });
 
+// quize Scemma
+const inserQuizeScema = new mongoose.Schema({
+  title: String,
+  quizeOptions: Array,
+  correctAnswer: String,
+  categoryName: String,
+});
+
+const allQuize = new mongoose.model("allQuize", inserQuizeScema);
 const User = new mongoose.model("User", userSchema);
+// quize  routes
+
+app.post("/insertquize", async (req, res) => {
+  const quizedata = req.body;
+  const { title, categoryName } = quizedata;
+  const alreadyExist = await allQuize.findOne({ title: title });
+  if (alreadyExist) {
+    res.send({ message: "exist" });
+  } else {
+    const NewQuizequize = new allQuize(quizedata);
+    NewQuizequize.save((error)=>{
+      if (error) {
+        res.send(error);
+      } else {
+        res.send({ message: "successfull" });
+      }
+    })
+  }
+});
+
 // regiset route
 
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
-  const encrypetPassword = await bcrypt.hash(password,10)
+  const encrypetPassword = await bcrypt.hash(password, 10);
   const alredayRegister = await User.findOne({ email: email });
 
   if (alredayRegister) {
@@ -43,41 +72,21 @@ app.post("/register", async (req, res) => {
     const user = new User({
       name,
       email,
-      password:encrypetPassword,
+      password: encrypetPassword,
     });
     user.save((err) => {
       if (err) {
         res.send(err);
       } else {
-        res.send({ message: "Successfully Registered, Please login now." });
+        res.send({ message: "Successfully Registered" });
       }
     });
   }
-
-  //  User.findOne({email: email}, (err, user) => {
-  //     if(user){
-  //         res.send({message: "User already registerd"})
-  //     } else {
-
-  //         const user = new User({
-  //             name,
-  //             email,
-  //             password
-  //         })
-  //         user.save(err => {
-  //             if(err) {
-  //                 res.send(err)
-  //             } else {
-  //                 res.send( { message: "Successfully Registered, Please login now." })
-  //             }
-  //         })
-  //     }
-  // })
 });
 
-app.get("/demo", async(req,res)=>{
-  res.send("demo file")
-})
+app.get("/demo", async (req, res) => {
+  res.send("demo file");
+});
 
 // login
 app.post("/login", async (req, res) => {
@@ -85,48 +94,35 @@ app.post("/login", async (req, res) => {
 
   const matchUser = await User.findOne({ email: email });
   if (matchUser) {
-    if (await bcrypt.compare(password,matchUser.password)) {
-      const token =  jwt.sign({email:matchUser.email},`${process.env.JWT_SECRET}`)
-      res.send({ message: "Successfull",data:token });
-
+    if (await bcrypt.compare(password, matchUser.password)) {
+      const token = jwt.sign(
+        { email: matchUser.email },
+        `${process.env.JWT_SECRET}`
+      );
+      res.send({ message: "Successfull", data: token });
     } else {
       res.send({ message: "Password didn't match" });
     }
   } else {
     res.send({ message: "User not registered" });
   }
-
-  // User.findOne({ email: email}, (err, user) => {
-  //     if(user){
-  //         if(password === user.password ) {
-  //             res.send({message: "Login Successfull", user: user})
-  //         } else {
-  //             res.send({ message: "Password didn't match"})
-  //         }
-  //     } else {
-  //         res.send({message: "User not registered"})
-  //     }
-  // })
 });
 
-// userdata 
-app.post("/userData", async(req,res)=>{
-  const {token} = req.body;
-  try{
+// userdata
+app.post("/userData", async (req, res) => {
+  const { token } = req.body;
+  try {
     const user = jwt.verify(token, `${process.env.JWT_SECRET}`);
     const userEmail = user.email;
-    User.findOne({email:userEmail})
-    .then((data)=>{
-      res.send({status:"Ok", data:data})
-    })
-    .catch((error)=>{
-      res.send({status:"Ok", data:error})
-    });
-
-  }catch(error){}
-})
-
-
+    User.findOne({ email: userEmail })
+      .then((data) => {
+        res.send({ status: "Ok", data: data });
+      })
+      .catch((error) => {
+        res.send({ status: "Ok", data: error });
+      });
+  } catch (error) {}
+});
 
 app.get("/", (req, res) => {
   res.send("quize app is running!");
