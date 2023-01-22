@@ -46,6 +46,25 @@ const allQuize = new mongoose.model("allQuize", inserQuizeScema);
 const User = new mongoose.model("User", userSchema);
 const category = new mongoose.model("category", categroyScema);
 
+// get quize data 
+
+app.get("/playQuize/:categoryName", async (req,res)=>{
+  const categoryName = req.params.categoryName;
+  try{
+ 
+    allQuize.find({categoryName:categoryName}, (err,data)=>{
+      if (err) {
+        res.send({message : "data not Founding"})
+      } else {
+          res.send({data})
+      }
+    })
+
+  }catch(err){
+    console.log(err);
+  }
+})
+
 // find all categorys
 
 app.get("/allCategorys", async(req,res)=>{
