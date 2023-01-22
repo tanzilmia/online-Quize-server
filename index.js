@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema({
   password: String,
 });
 
+const categroyScema = new mongoose.Schema({
+  categoryName: String,
+  
+});
+
 // quize Scemma
 const inserQuizeScema = new mongoose.Schema({
   title: String,
@@ -39,6 +44,42 @@ const inserQuizeScema = new mongoose.Schema({
 
 const allQuize = new mongoose.model("allQuize", inserQuizeScema);
 const User = new mongoose.model("User", userSchema);
+const category = new mongoose.model("category", categroyScema);
+
+// find all categorys
+
+app.get("/allCategorys", async(req,res)=>{
+  
+  category.find({}, (err, data) => {
+  if (err) {
+      
+  } else {
+      res.send({data})
+  }
+});
+})
+
+// insert category 
+
+app.post("/addcategory", async (req, res) => {
+  const categorys = req.body;
+  const {categoryName} = categorys;
+  const alreadyExist = await category.findOne({ categoryName: categoryName });
+  if (alreadyExist) {
+    res.send({ message: "exist" });
+  } else {
+    const NewQuizeCategory = new category(categorys); 
+    NewQuizeCategory.save((error)=>{
+      if (error) {
+        res.send(error);
+      } else {
+        res.send({ message: "successfull" });
+      }
+    })
+  }
+});
+
+
 // quize  routes
 
 app.post("/insertquize", async (req, res) => {
