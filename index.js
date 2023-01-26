@@ -144,6 +144,31 @@ app.delete("/delete-user", async(req,res)=>{
   }catch(err){}
 })
 
+// reset user history
+
+app.put("/reset-user-history", async(req,res)=>{
+  const {id} = req.query
+  console.log(id);
+  try{
+    await dailyQuize.updateOne({_id:id},
+      {
+        $set:{
+            wrongAns:0,
+            score:0,
+            currentQuestion :0,
+            rightAns:0,
+        }
+      },
+      (err)=>{
+        if(err){
+          res.send({message:"sorry Update not complete"})
+        }else{
+          res.send({message:"update complete"})
+        }
+      }
+      )
+  }catch(err){}
+})
 
 
 app.put("/auto-submit-quize", async(req,res)=>{
