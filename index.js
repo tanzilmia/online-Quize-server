@@ -80,6 +80,20 @@ app.get("/all-user", async(req,res)=>{
  }catch(err){}
 })
 
+// get my quize histry -- user panel
+
+app.get("/user-info", async(req,res)=>{
+ try{
+  dailyQuize.find({email:req.query.email}, (err,data)=>{
+    if(err){
+      res.send({message:"No User Available"})
+    }else{
+      res.send(data)
+    }
+  })
+ }catch(err){}
+})
+
 // get single user info
 
 app.get("/single-user-info/:email", async(req,res)=>{
