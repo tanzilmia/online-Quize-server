@@ -65,32 +65,91 @@ const category = new mongoose.model("category", categroyScema);
 const settings = new mongoose.model("settings",QuizeSetting);
 const dailyQuize = new mongoose.model("dailyQuize",DailyQuizeInfo);
 
-// update auto submit quize 
+
+// get all user info 
+
+app.get("/all-user", async(req,res)=>{
+ try{
+  User.find({}, (err,data)=>{
+    if(err){
+      res.send({message:"No User Available"})
+    }else{
+      res.send(data)
+    }
+  })
+ }catch(err){}
+})
+
+// get single user info
+
+app.get("/single-user-info/:email", async(req,res)=>{
+  
+ try{
+  dailyQuize.find({email:req.params.email}, (err,data)=>{
+    if(err){
+      res.send({message:"No User Available"})
+    }else{
+      res.send(data)
+    }
+  })
+ }catch(err){}
+})
 
 
-// app.put("/auto-submit-quize", async(req,res)=>{
-//   const {wrong,score,categoryName,date,email} = req.body;
-//   try {
-//     const result = await dailyQuize.updateOne(
-//       {$and: [{email:email}, {date:date}, {categoryName:categoryName}]},
-//       {$inc: {wrongAns:1},$dec: {score:2}}
-//     );
-//     if (result.n === 0) {
-//       res.status(404).send({ message: "No matching document found" });
-//     }else {
-//       res.send({message:"auto submit Quize Update"})
-//     }
-//   } catch (err) {
-//     res.send({message:"error Update"})
-//   }
-// });
+
+
+
+
+
+app.get("/all-user-history", async(req,res)=>{
+ try{
+  dailyQuize.find({}, (err,data)=>{
+    if(err){
+      res.send({message:"No User Available"})
+    }else{
+      res.send(data)
+    }
+  })
+ }catch(err){}
+})
+
+
+// delete a user 
+
+
+app.delete("/delete-user-history", async(req,res)=>{
+  try{
+    await dailyQuize.deleteOne({_id:req.query.id}, (err)=>{
+      if(err){
+        res.send({message:" Not Success Delete History"})
+      }else{
+        res.send({message:"Successfully Deleted User History"})
+      }
+    })
+  }catch(err){}
+})
+
+
+// delete user
+
+app.delete("/delete-user", async(req,res)=>{
+  try{
+    await User.deleteOne({_id:req.query.id}, (err)=>{
+      if(err){
+        res.send({message:" Not Success Delete History"})
+      }else{
+        res.send({message:"Successfully Deleted User History"})
+      }
+    })
+  }catch(err){}
+})
 
 
 
 app.put("/auto-submit-quize", async(req,res)=>{
   const {wrong,score,categoryName,date,email,currentQuestion,dayliQuize} = req.body;
   const isAlreadyExist = await dailyQuize.findOne({email:email,date:date,categoryName:categoryName});
-  if(isAlreadyExist.currentQuestion === dayliQuize){
+  if(isAlreadyExist.currentQuestion === dayliQuize){  
     res.send({message:"You Already Play TODay"})
   }else{
     try{
@@ -116,6 +175,63 @@ app.put("/auto-submit-quize", async(req,res)=>{
   
 })
 
+// right anser 
+app.put("/right-quize", async(req,res)=>{
+  const {score,categoryName,date,email,currentQuestion,dayliQuize,rigthAns} = req.body;
+  const isAlreadyExist = await dailyQuize.findOne({email:email,date:date,categoryName:categoryName});
+  if(isAlreadyExist.currentQuestion === dayliQuize){  
+    res.send({message:"You Already Play TODay"})
+  }else{
+    try{
+      await dailyQuize.updateOne(
+        {email:email,date:date,categoryName:categoryName},
+        {
+          $set:{
+            rightAns:rigthAns + 1,
+            score:score + 10,
+            currentQuestion : currentQuestion + 1
+          },
+        },
+        (err)=>{
+          if(err){
+            res.send({message:"error Update"})
+          }else{
+            res.send({message:"right answer points Update"})
+          }
+        }
+      )
+    }catch(err) {}
+  }
+  
+})
+app.put("/wrong-quize", async(req,res)=>{
+  const {score,categoryName,date,email,currentQuestion,dayliQuize,wrong} = req.body;
+  const isAlreadyExist = await dailyQuize.findOne({email:email,date:date,categoryName:categoryName});
+  if(isAlreadyExist.currentQuestion === dayliQuize){  
+    res.send({message:"You Already Play TODay"})
+  }else{
+    try{
+      await dailyQuize.updateOne(
+        {email:email,date:date,categoryName:categoryName},
+        {
+          $set:{
+            wrongAns:wrong + 1,
+            score:score - 10,
+            currentQuestion : currentQuestion + 1
+          },
+        },
+        (err)=>{
+          if(err){
+            res.send({message:"error Update"})
+          }else{
+            res.send({message:"wrong answer points Update"})
+          }
+        }
+      )
+    }catch(err) {}
+  }
+  
+})
 
 // get daily stored data 
 
@@ -222,7 +338,7 @@ app.post("/addcategory", async (req, res) => {
 app.post("/insertquize", async (req, res) => {
   const quizedata = req.body;
   const { title, categoryName } = quizedata;
-  const alreadyExist = await allQuize.findOne({ title: title });
+  const alreadyExist = await allQuize.findOne({ title: title,categoryName:categoryName });
   if (alreadyExist) {
     res.send({ message: "exist" });
   } else {
