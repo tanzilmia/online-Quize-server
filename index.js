@@ -66,6 +66,57 @@ const settings = new mongoose.model("settings",QuizeSetting);
 const dailyQuize = new mongoose.model("dailyQuize",DailyQuizeInfo);
 
 
+// update timer 
+
+app.put("/update-timer", async(req,res)=>{
+  const {time} = req.body
+
+  try{
+    await settings.updateOne({},
+      {
+        $set:{
+          timer:time
+            
+        }
+      },
+      (err)=>{
+        if(err){
+          res.send({message:"sorry Update not complete"})
+        }else{
+          res.send({message:"update complete"})
+        }
+      }
+      )
+  }catch(err){}
+})
+
+// update daily Quize limite
+
+app.put("/update-dailyQuze", async(req,res)=>{
+  const {UpdateDailyQuize} = req.body
+
+  try{
+    await settings.updateOne({},
+      {
+        $set:{
+          dayliQuize:UpdateDailyQuize
+            
+        }
+      },
+      (err)=>{
+        if(err){
+          res.send({message:"sorry Update not complete"})
+        }else{
+          res.send({message:"update complete"})
+        }
+      }
+      )
+  }catch(err){}
+})
+
+
+
+
 // get all user info 
 
 app.get("/all-user", async(req,res)=>{
