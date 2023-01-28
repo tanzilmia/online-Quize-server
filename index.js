@@ -30,7 +30,11 @@ const userSchema = new mongoose.Schema({
 });
 const QuizeSetting = new mongoose.Schema({
   timer:Number,
-  dayliQuize:Number
+  dayliQuize:Number,
+  icressPoint:Number,
+  decressPoint:Number,
+  autosubmitPoint:Number,
+ 
  
 });
 
@@ -42,7 +46,8 @@ const DailyQuizeInfo = new mongoose.Schema({
         currentQuestion:Number,
         score:Number,
         rightAns:Number,
-        wrongAns:Number
+        wrongAns:Number,
+        autoSubmitAnswer:Number,
 })
 
 
@@ -113,8 +118,73 @@ app.put("/update-dailyQuze", async(req,res)=>{
       )
   }catch(err){}
 })
+// update right point
+app.put("/update-right-point", async(req,res)=>{
+  const {UpdaterightPoint} = req.body
 
+  try{
+    await settings.updateOne({},
+      {
+        $set:{
+          icressPoint:UpdaterightPoint
+            
+        }
+      },
+      (err)=>{
+        if(err){
+          res.send({message:"sorry Update not complete"})
+        }else{
+          res.send({message:"update complete"})
+        }
+      }
+      )
+  }catch(err){}
+})  
 
+// update wrong point
+app.put("/update-wrong-point", async(req,res)=>{
+  const {UpdatewrongPoint} = req.body
+
+  try{
+    await settings.updateOne({},
+      {
+        $set:{
+          decressPoint:UpdatewrongPoint
+            
+        }
+      },
+      (err)=>{
+        if(err){
+          res.send({message:"sorry Update not complete"})
+        }else{
+          res.send({message:"update complete"})
+        }
+      }
+      )
+  }catch(err){}
+})  
+
+// update autosubmit point
+app.put("/update-autosubmit-point", async(req,res)=>{
+  const {Updateautosubmit} = req.body
+  try{
+    await settings.updateOne({},
+      {
+        $set:{
+          autosubmitPoint:Updateautosubmit
+            
+        }
+      },
+      (err)=>{
+        if(err){
+          res.send({message:"sorry Update not complete"})
+        }else{
+          res.send({message:"update complete"})
+        }
+      }
+      )
+  }catch(err){}
+})  
 
 
 // get all user info 
@@ -159,11 +229,6 @@ app.get("/single-user-info/:email", async(req,res)=>{
   })
  }catch(err){}
 })
-
-
-
-
-
 
 
 app.get("/all-user-history", async(req,res)=>{
@@ -213,7 +278,6 @@ app.delete("/delete-user", async(req,res)=>{
 
 app.put("/reset-user-history", async(req,res)=>{
   const {id} = req.query
-  console.log(id);
   try{
     await dailyQuize.updateOne({_id:id},
       {
@@ -237,7 +301,7 @@ app.put("/reset-user-history", async(req,res)=>{
 
 
 app.put("/auto-submit-quize", async(req,res)=>{
-  const {wrong,score,categoryName,date,email,currentQuestion,dayliQuize} = req.body;
+  const {wrong,score,categoryName,date,email,currentQuestion,dayliQuize,autosubmitPoint,autosubmit} = req.body;
   const isAlreadyExist = await dailyQuize.findOne({email:email,date:date,categoryName:categoryName});
   if(isAlreadyExist.currentQuestion === dayliQuize){  
     res.send({message:"You Already Play TODay"})
@@ -248,8 +312,9 @@ app.put("/auto-submit-quize", async(req,res)=>{
         {
           $set:{
             wrongAns:wrong + 1,
-            score:score - 2,
-            currentQuestion : currentQuestion + 1
+            score:score - autosubmitPoint,
+            currentQuestion : currentQuestion + 1,
+            autoSubmitAnswer : autosubmit + 1,
           },
         },
         (err)=>{
@@ -267,7 +332,7 @@ app.put("/auto-submit-quize", async(req,res)=>{
 
 // right anser 
 app.put("/right-quize", async(req,res)=>{
-  const {score,categoryName,date,email,currentQuestion,dayliQuize,rigthAns} = req.body;
+  const {score,categoryName,date,email,currentQuestion,dayliQuize,rigthAns,icressPoint} = req.body;
   const isAlreadyExist = await dailyQuize.findOne({email:email,date:date,categoryName:categoryName});
   if(isAlreadyExist.currentQuestion === dayliQuize){  
     res.send({message:"You Already Play TODay"})
@@ -278,7 +343,7 @@ app.put("/right-quize", async(req,res)=>{
         {
           $set:{
             rightAns:rigthAns + 1,
-            score:score + 10,
+            score:score + icressPoint,
             currentQuestion : currentQuestion + 1
           },
         },
@@ -294,19 +359,20 @@ app.put("/right-quize", async(req,res)=>{
   }
   
 })
+// wrong answer
 app.put("/wrong-quize", async(req,res)=>{
-  const {score,categoryName,date,email,currentQuestion,dayliQuize,wrong} = req.body;
+  const {score,categoryName,date,email,currentQuestion,dayliQuize,wrong,decressPoint} = req.body;
   const isAlreadyExist = await dailyQuize.findOne({email:email,date:date,categoryName:categoryName});
   if(isAlreadyExist.currentQuestion === dayliQuize){  
     res.send({message:"You Already Play TODay"})
   }else{
-    try{
+    try{  
       await dailyQuize.updateOne(
         {email:email,date:date,categoryName:categoryName},
         {
           $set:{
             wrongAns:wrong + 1,
-            score:score - 10,
+            score:score - decressPoint,
             currentQuestion : currentQuestion + 1
           },
         },
@@ -327,7 +393,6 @@ app.put("/wrong-quize", async(req,res)=>{
 
 app.get("/store-daily-quize", async(req,res)=>{
   const {email,date,categoryName} = req.query
-  console.log(email,date,categoryName)
   try{
     dailyQuize.findOne({email:email,date:date,categoryName:categoryName}, (err,data)=>{
       if(err){
