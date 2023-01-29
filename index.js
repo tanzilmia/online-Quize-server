@@ -70,12 +70,26 @@ const category = new mongoose.model("category", categroyScema);
 const settings = new mongoose.model("settings",QuizeSetting);
 const dailyQuize = new mongoose.model("dailyQuize",DailyQuizeInfo);
 
+// get single Quize 
+
+app.get("/single-Quize/:id", async (req,res)=>{
+  const id = req.params.id
+  try{
+    await allQuize.findOne({_id:id}, (err,data)=>{
+      if(err){
+        res.send({message:"data not found"})
+      }else{
+        res.send(data)
+      }
+    })
+  }catch(err){}
+  
+})
 
 // update timer 
 
 app.put("/update-timer", async(req,res)=>{
   const {time} = req.body
-
   try{
     await settings.updateOne({},
       {
@@ -94,6 +108,36 @@ app.put("/update-timer", async(req,res)=>{
       )
   }catch(err){}
 })
+
+
+app.put("/single-Quize-update", async(req,res)=>{
+  const updateinfo = req.body
+  const {title,quizeOptions,categoryName,correctAnswer,id} = updateinfo
+  
+  try{
+    await allQuize.updateOne({_id:id},
+      {
+        $set:{
+          title: title,
+          quizeOptions: quizeOptions,
+          correctAnswer: correctAnswer,
+          categoryName: categoryName,
+        }
+      },
+      (err)=>{
+        if(err){
+          res.send({message:"sorry Update not complete"})
+        }else{
+          res.send({message:"update complete"})
+        }
+      }
+      )
+  }catch(err){}
+})
+
+
+
+
 
 // update daily Quize limite
 
@@ -185,6 +229,8 @@ app.put("/update-autosubmit-point", async(req,res)=>{
       )
   }catch(err){}
 })  
+
+
 
 
 // get all user info 
