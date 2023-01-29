@@ -139,6 +139,8 @@ app.put("/single-Quize-update", async(req,res)=>{
 
 
 
+
+
 // update daily Quize limite
 
 app.put("/update-dailyQuze", async(req,res)=>{
@@ -315,6 +317,35 @@ app.delete("/delete-user", async(req,res)=>{
         res.send({message:" Not Success Delete History"})
       }else{
         res.send({message:"Successfully Deleted User History"})
+      }
+    })
+  }catch(err){}
+})
+
+
+// delete quize 
+
+
+app.delete("/delete-quize", async(req,res)=>{
+  try{
+    await allQuize.deleteOne({_id:req.query.id}, (err)=>{
+      if(err){
+        res.send({message:" Not Success Delete History"})
+      }else{
+        res.send({message:"Successfully Deleted"})
+      }
+    })
+  }catch(err){}
+})
+
+// delete category name
+app.delete("/delete-category", async(req,res)=>{
+  try{
+    await category.deleteOne({_id:req.query.id}, (err)=>{
+      if(err){
+        res.send({message:" Not Success Delete History"})
+      }else{
+        res.send({message:"Successfully Deleted"})
       }
     })
   }catch(err){}
