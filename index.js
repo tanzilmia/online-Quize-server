@@ -265,10 +265,12 @@ app.get("/user-info", async(req,res)=>{
 
 // get single user info
 
-app.get("/single-user-info/:email", async(req,res)=>{
+app.get("/single-user-info/:id", async(req,res)=>{
+  
   
  try{
-  dailyQuize.find({email:req.params.email}, (err,data)=>{
+  const userinfo = await User.findOne({_id :req.params.id})
+  dailyQuize.find({email:userinfo.email}, (err,data)=>{
     if(err){
       res.send({message:"No User Available"})
     }else{
