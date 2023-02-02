@@ -22,6 +22,21 @@ mongoose
   })
   .catch((e) => console.log(e));
 
+const verifyToken = (req,res,next) =>{
+  const {authorization} = req.headers;
+  try{
+    if(!authorization){
+      return res.status(401).send("Sorry Unauthorize Access")
+    }
+    const token = authorization.split(' ')[1]
+    const decoded =  jwt.verify(token, process.env.JWT_SECRET)
+     req.decoded =  decoded
+     next()
+  }catch(err){
+    next("No Access")
+  }
+}
+
 // defining scemmma
 const userSchema = new mongoose.Schema({
   name: String,
@@ -53,6 +68,7 @@ const DailyQuizeInfo = new mongoose.Schema({
 
 const categroyScema = new mongoose.Schema({
   categoryName: String,
+  slug:Boolean
   
 });
 
@@ -69,6 +85,8 @@ const User = new mongoose.model("User", userSchema);
 const category = new mongoose.model("category", categroyScema);
 const settings = new mongoose.model("settings",QuizeSetting);
 const dailyQuize = new mongoose.model("dailyQuize",DailyQuizeInfo);
+
+
 
 // get single Quize 
 
@@ -134,12 +152,6 @@ app.put("/single-Quize-update", async(req,res)=>{
       )
   }catch(err){}
 })
-
-
-
-
-
-
 
 // update daily Quize limite
 
@@ -379,6 +391,30 @@ app.put("/reset-user-history", async(req,res)=>{
 })
 
 
+app.put("/update-categorystatus", async(req,res)=>{
+  const {categoryName} = req.query
+  try{
+    await category.updateOne({categoryName:categoryName},
+      {
+        $set:{
+          slug:true
+        }
+      },
+      (err)=>{
+        if(err){
+          res.send({message:"sorry Update not complete"})
+        }else{
+          res.send({message:"update complete"})
+        }
+      }
+      )
+  }catch(err){}
+})
+
+
+
+
+
 app.put("/auto-submit-quize", async(req,res)=>{
   const {wrong,score,categoryName,date,email,currentQuestion,dayliQuize,autosubmitPoint,autosubmit} = req.body;
   const isAlreadyExist = await dailyQuize.findOne({email:email,date:date,categoryName:categoryName});
@@ -546,6 +582,19 @@ app.get("/allCategorys", async(req,res)=>{
 });
 })
 
+// quize page showings categories
+
+app.get("/allCategorys-quizepage", async(req,res)=>{
+  
+  category.find({slug:true}, (err, data) => {
+  if (err) {
+      
+  } else {
+      res.send(data)
+  }
+});
+})
+
 // insert category 
 
 app.post("/addcategory", async (req, res) => {
@@ -569,7 +618,7 @@ app.post("/addcategory", async (req, res) => {
 
 // quize  routes
 
-app.post("/insertquize", async (req, res) => {
+app.post("/insertquize", verifyToken, async (req, res) => {
   const quizedata = req.body;
   const { title, categoryName } = quizedata;
   const alreadyExist = await allQuize.findOne({ title: title,categoryName:categoryName });
